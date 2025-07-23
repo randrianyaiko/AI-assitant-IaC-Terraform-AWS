@@ -1,0 +1,10 @@
+aws-data-sources/
+env/
+*.ipynb
+*.in
+*.json
+.env
+.*png
+__pycache__
+*.webp
+*.png
