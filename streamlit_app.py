@@ -4,6 +4,7 @@ import requests
 from PIL import Image
 from typing import Tuple, Optional
 from dotenv import load_dotenv
+import base64
 
 load_dotenv()
 
@@ -66,14 +67,29 @@ def upload_inputs() -> Tuple[Optional[Image.Image], Optional[str]]:
 
 def request_terraform_code(image_file, description: str) -> Tuple[str, Optional[str]]:
     """Sends request to backend API and returns parsed text and code."""
+    api_key = os.getenv("API_KEY")
+    if not api_key:
+        raise ValueError("API key not set in environment.")
+
+    headers = {
+        "X-API-KEY": api_key,
+        "Content-Type": "application/json"
+    }
+
+    # Convert image to base64
+    image_bytes = image_file.getvalue()
+    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+
     response = requests.post(
-        BACKEND_URL,
+        f"{BACKEND_URL.rstrip('/')}/generate-code",
         json={
-            "image_path": image_file.name,
+            "image_base64": image_b64,
             "project_description": description
         },
+        headers=headers,
         timeout=60
     )
+
     if response.status_code == 200:
         output_str = response.json().get("terraform_code", {}).get("code", "")
         return split_text_and_code(output_str)
